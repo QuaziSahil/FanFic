@@ -1,93 +1,185 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear()
+
   return (
-    <footer className="relative py-16 px-6 border-t border-white/5">
-      <div className="max-w-6xl mx-auto">
+    <footer className="relative py-16 px-6 border-t border-pink-500/10 bg-gradient-to-b from-transparent to-pink-950/10">
+      {/* Decorative Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-fuchsia-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-6xl mx-auto relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center border border-violet-500/20">
-                <span className="text-violet-400 text-sm">✦</span>
-              </div>
-              <span className="text-lg font-semibold">FanFic</span>
-            </div>
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <Link href="/">
+              <motion.div 
+                className="flex items-center gap-3 mb-4 cursor-pointer group"
+                whileHover={{ scale: 1.02 }}
+              >
+                <motion.div 
+                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center border border-pink-500/30 group-hover:border-pink-500/50 transition-colors"
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  <span className="text-pink-400 text-lg">✦</span>
+                </motion.div>
+                <span className="text-xl font-bold bg-gradient-to-r from-white to-pink-200 bg-clip-text text-transparent">
+                  FanFic
+                </span>
+              </motion.div>
+            </Link>
+            <p className="text-gray-400 text-sm leading-relaxed">
               Your gateway to fan fiction stories and audiobooks from beloved universes.
             </p>
+            <motion.p 
+              className="mt-3 text-xs text-pink-400/60"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              Made with ♡ for fans
+            </motion.p>
           </div>
 
-          {/* Links */}
+          {/* Navigation Links */}
           <div>
-            <h4 className="text-sm font-medium text-gray-300 mb-4">Navigate</h4>
-            <ul className="space-y-2">
-              {['Home', 'All Series', 'Audiobooks', 'Latest'].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-gray-500 text-sm text-hover-underline">
-                    {link}
-                  </a>
-                </li>
+            <h4 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <span className="text-pink-400">📍</span> Navigate
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { name: 'Home', href: '/', icon: '🏠' },
+                { name: 'Browse All', href: '/browse', icon: '📚' },
+                { name: 'Audiobooks', href: '/audiobooks', icon: '🎧' },
+                { name: 'About', href: '/about', icon: '✨' },
+              ].map((link, i) => (
+                <motion.li 
+                  key={link.name}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Link 
+                    href={link.href}
+                    className="text-gray-400 text-sm hover:text-pink-300 transition-colors flex items-center gap-2 group"
+                  >
+                    <span className="opacity-50 group-hover:opacity-100 transition-opacity">{link.icon}</span>
+                    <span className="text-hover-underline">{link.name}</span>
+                  </Link>
+                </motion.li>
               ))}
             </ul>
           </div>
 
           {/* Series */}
           <div>
-            <h4 className="text-sm font-medium text-gray-300 mb-4">Popular</h4>
-            <ul className="space-y-2">
-              {['Harry Potter', 'Marvel', 'Star Wars', 'Anime'].map((series) => (
-                <li key={series}>
-                  <a href="#" className="text-gray-500 text-sm text-hover-underline">
-                    {series}
-                  </a>
-                </li>
+            <h4 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <span className="text-pink-400">⭐</span> Popular Series
+            </h4>
+            <ul className="space-y-3">
+              {[
+                { name: 'Harry Potter', emoji: '🧙‍♂️' },
+                { name: 'Marvel Universe', emoji: '🦸' },
+                { name: 'Star Wars', emoji: '⚔️' },
+                { name: 'Anime Worlds', emoji: '🌸' },
+              ].map((series, i) => (
+                <motion.li 
+                  key={series.name}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 + 0.2 }}
+                >
+                  <Link 
+                    href="/browse"
+                    className="text-gray-400 text-sm hover:text-pink-300 transition-colors flex items-center gap-2 group"
+                  >
+                    <span className="opacity-50 group-hover:opacity-100 transition-opacity">{series.emoji}</span>
+                    <span className="text-hover-underline">{series.name}</span>
+                  </Link>
+                </motion.li>
               ))}
             </ul>
           </div>
 
           {/* Newsletter */}
           <div>
-            <h4 className="text-sm font-medium text-gray-300 mb-4">Stay Updated</h4>
-            <p className="text-gray-500 text-sm mb-4">
-              Get notified about new stories.
+            <h4 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <span className="text-pink-400">💌</span> Stay Updated
+            </h4>
+            <p className="text-gray-400 text-sm mb-4">
+              Get notified about new stories and chapters.
             </p>
             <div className="flex gap-2">
               <input
                 type="email"
-                placeholder="Email"
-                className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-violet-500/30 transition-colors"
+                placeholder="Your email"
+                className="flex-1 px-4 py-2.5 bg-white/5 border border-pink-500/20 rounded-xl text-sm focus:outline-none focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all placeholder:text-gray-500"
               />
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-4 py-2 bg-violet-500/20 border border-violet-500/20 rounded-lg text-violet-300 text-sm font-medium hover:bg-violet-500/30 transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2.5 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30 rounded-xl text-pink-300 text-sm font-medium hover:from-pink-500/30 hover:to-fuchsia-500/30 transition-all"
               >
                 Join
               </motion.button>
             </div>
+            <p className="mt-3 text-xs text-gray-500">
+              No spam, only story updates ✨
+            </p>
           </div>
         </div>
 
         {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-gray-600 text-xs">
-            © 2026 FanFic. Made with care.
-          </p>
-          <div className="flex gap-6">
-            {['Twitter', 'Discord', 'GitHub'].map((social) => (
-              <a
-                key={social}
+        <div className="mt-12 pt-8 border-t border-pink-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-pink-400"
+            >
+              ♥
+            </motion.span>
+            <p className="text-gray-500 text-xs">
+              © {currentYear} FanFic. All stories belong to their respective creators.
+            </p>
+          </div>
+          <div className="flex items-center gap-6">
+            {[
+              { name: 'Twitter', icon: '𝕏' },
+              { name: 'Discord', icon: '💬' },
+              { name: 'GitHub', icon: '🐙' },
+            ].map((social) => (
+              <motion.a
+                key={social.name}
                 href="#"
-                className="text-gray-500 text-xs text-hover-lift"
+                whileHover={{ scale: 1.1, y: -2 }}
+                className="text-gray-500 text-xs hover:text-pink-400 transition-colors flex items-center gap-1.5"
               >
-                {social}
-              </a>
+                <span>{social.icon}</span>
+                <span>{social.name}</span>
+              </motion.a>
             ))}
           </div>
         </div>
+
+        {/* Credits */}
+        <motion.div 
+          className="mt-6 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <p className="text-xs text-gray-600">
+            Original stories by <span className="text-pink-400/80">Necroz2002</span> • 
+            Site by <span className="text-fuchsia-400/80">QuaziSahil</span>
+          </p>
+        </motion.div>
       </div>
     </footer>
   )
