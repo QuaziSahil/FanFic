@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'FanFic - Your Gateway to Fan Fiction & Audiobooks',
   description: 'Discover amazing fan fiction stories and audiobooks from your favorite series',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({

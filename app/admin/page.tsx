@@ -49,12 +49,15 @@ export default function AdminPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password)
     } catch (err: any) {
+      console.error('Login error:', err.code, err.message)
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError('Invalid email or password')
       } else if (err.code === 'auth/invalid-email') {
         setError('Invalid email address')
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Try again later.')
       } else {
-        setError('Login failed. Please try again.')
+        setError(`Login failed: ${err.code || err.message}`)
       }
     }
   }
