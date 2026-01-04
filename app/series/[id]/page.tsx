@@ -1,11 +1,9 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import ParticleBackground from '@/components/ParticleBackground'
 import Footer from '@/components/Footer'
 import AudioPlayer from '@/components/AudioPlayer'
 import { getSeriesById, Series, Chapter } from '@/lib/storage'
@@ -17,13 +15,13 @@ type ReadingTheme = 'night' | 'day' | 'sepia' | 'ocean' | 'forest' | 'rose'
 type FontSize = 'sm' | 'md' | 'lg' | 'xl'
 type FontFamily = 'serif' | 'sans' | 'mono'
 
-const themeOptions: { id: ReadingTheme; label: string; bg: string; icon: string }[] = [
-  { id: 'night', label: 'Night', bg: '#0a0a0f', icon: '🌙' },
-  { id: 'day', label: 'Day', bg: '#fafaf9', icon: '☀️' },
-  { id: 'sepia', label: 'Sepia', bg: '#f4ecd8', icon: '📜' },
-  { id: 'ocean', label: 'Ocean', bg: '#0f1729', icon: '🌊' },
-  { id: 'forest', label: 'Forest', bg: '#0c1a14', icon: '🌲' },
-  { id: 'rose', label: 'Rose', bg: '#1a0c14', icon: '🌸' },
+const themeOptions: { id: ReadingTheme; label: string; icon: string }[] = [
+  { id: 'night', label: 'Night', icon: '🌙' },
+  { id: 'day', label: 'Day', icon: '☀️' },
+  { id: 'sepia', label: 'Sepia', icon: '📜' },
+  { id: 'ocean', label: 'Ocean', icon: '🌊' },
+  { id: 'forest', label: 'Forest', icon: '🌲' },
+  { id: 'rose', label: 'Rose', icon: '🌸' },
 ]
 
 export default function SeriesPage() {
@@ -40,71 +38,35 @@ export default function SeriesPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [bookmarking, setBookmarking] = useState(false)
-  const [showControls, setShowControls] = useState(true)
   const [scrollProgress, setScrollProgress] = useState(0)
   const { user, userData, refreshUserData } = useAuth()
   const contentRef = useRef<HTMLDivElement>(null)
-  const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const data = getSeriesById(seriesId)
     setSeries(data)
   }, [seriesId])
 
-  // Check if series is bookmarked
   useEffect(() => {
     if (userData?.bookmarks) {
       setIsBookmarked(userData.bookmarks.includes(seriesId))
     }
   }, [userData, seriesId])
 
-  // Track reading progress
   const handleScroll = useCallback(() => {
     if (!contentRef.current) return
-    
     const element = contentRef.current
     const scrollTop = element.scrollTop
     const scrollHeight = element.scrollHeight - element.clientHeight
     const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0
-    
     setScrollProgress(progress)
     
-    // Update progress in Firebase
     if (user && selectedStory) {
       const roundedProgress = Math.round(progress / 10) * 10
       updateReadingProgress(user.uid, selectedStory.id, roundedProgress)
     }
+  }, [user, selectedStory])
 
-    // Auto-hide controls on scroll (mobile reading experience)
-    setShowControls(true)
-    if (hideControlsTimeout.current) {
-      clearTimeout(hideControlsTimeout.current)
-    }
-    hideControlsTimeout.current = setTimeout(() => {
-      if (!showSettings) {
-        setShowControls(false)
-      }
-    }, 2000)
-  }, [user, selectedStory, showSettings])
-
-  // Toggle controls on tap (mobile)
-  const handleContentTap = () => {
-    if (window.innerWidth < 768) {
-      setShowControls(!showControls)
-      if (!showControls) {
-        if (hideControlsTimeout.current) {
-          clearTimeout(hideControlsTimeout.current)
-        }
-        hideControlsTimeout.current = setTimeout(() => {
-          if (!showSettings) {
-            setShowControls(false)
-          }
-        }, 3000)
-      }
-    }
-  }
-
-  // Add to reading history when opening a story
   useEffect(() => {
     if (user && selectedStory && series) {
       addToReadingHistory(user.uid, series.id, selectedStory.id)
@@ -122,9 +84,9 @@ export default function SeriesPage() {
 
   if (!series) {
     return (
-      <main className="min-h-screen relative flex items-center justify-center">
-        <ParticleBackground />
+      <main className="min-h-screen relative flex items-center justify-center bg-[#050507]">
         <div className="text-center">
+          <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-500">Loading...</p>
         </div>
       </main>
@@ -145,224 +107,179 @@ export default function SeriesPage() {
   const displayAudiobooks = activeTab === 'all' || activeTab === 'audiobooks'
 
   return (
-    <main className="min-h-screen relative">
-      <ParticleBackground />
+    <main className="min-h-screen relative bg-[#050507]">
+      {/* Static Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-pink-600/10 to-transparent rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-gradient-to-tl from-fuchsia-600/10 to-transparent rounded-full blur-[80px]" />
+      </div>
+
       <Navbar />
       
       {/* Header */}
-      <section className="relative pt-32 pb-16 px-6">
+      <section className="relative z-10 pt-32 pb-16 px-6">
         <div className="max-w-6xl mx-auto">
-          <Link href="/">
-            <motion.button 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              whileHover={{ x: -3 }} 
-              className="flex items-center gap-2 text-gray-500 hover:text-gray-300 mb-8 transition-colors text-sm"
-            >
-              ← Back to Series
-            </motion.button>
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-300 mb-8 transition-colors text-sm">
+            ← Back to Home
           </Link>
-          <div className="flex items-start gap-6">
-            <motion.div 
-              initial={{ scale: 0, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              transition={{ type: "spring", stiffness: 200 }} 
-              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/10 flex items-center justify-center text-4xl flex-shrink-0 overflow-hidden"
-            >
+          
+          <div className="flex items-start gap-4 md:gap-6">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 border border-pink-500/20 flex items-center justify-center text-3xl md:text-4xl flex-shrink-0 overflow-hidden">
               {series.image ? (
                 <img src={series.image} alt={series.title} className="w-full h-full object-cover" />
               ) : (
                 series.icon
               )}
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex-1">
+            </div>
+            
+            <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
-                <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-                  <span className="gradient-text">{series.title}</span>
+                <h1 className="text-2xl md:text-4xl font-bold mb-2 tracking-tight bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">
+                  {series.title}
                 </h1>
-                {/* Bookmark Button */}
                 {user && (
-                  <motion.button
+                  <button
                     onClick={handleToggleBookmark}
                     disabled={bookmarking}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg md:text-xl transition-all active:scale-95 flex-shrink-0 ${
                       isBookmarked 
-                        ? 'bg-violet-500/30 text-violet-300 border border-violet-500/50' 
-                        : 'bg-white/5 text-gray-500 hover:text-violet-300 border border-white/10 hover:border-violet-500/30'
+                        ? 'bg-pink-500/30 text-pink-300 border border-pink-500/50' 
+                        : 'bg-white/5 text-gray-500 hover:text-pink-300 border border-white/10 hover:border-pink-500/30'
                     }`}
                   >
                     {bookmarking ? (
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : isBookmarked ? '🔖' : '📑'}
-                  </motion.button>
+                  </button>
                 )}
               </div>
-              <p className="text-gray-500">{series.description}</p>
-              <div className="flex gap-4 mt-3 text-sm text-gray-400">
+              <p className="text-gray-500 text-sm md:text-base">{series.description}</p>
+              <div className="flex gap-4 mt-3 text-xs md:text-sm text-gray-400">
                 <span>📖 {stories.length} stories</span>
                 <span>🎧 {audiobooks.length} audiobooks</span>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Filters */}
-      <section className="py-6 px-6 sticky top-16 z-40 glass">
+      <section className="relative z-10 py-4 md:py-6 px-4 md:px-6 sticky top-16 bg-[#050507]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex gap-1 p-1 bg-white/5 rounded-full">
-            {[{ id: 'all', label: 'All' }, { id: 'stories', label: 'Stories' }, { id: 'audiobooks', label: 'Audiobooks' }].map((tab) => (
-              <motion.button 
+          <div className="flex gap-1 p-1 bg-white/5 rounded-full w-full md:w-auto justify-center">
+            {[{ id: 'all', label: 'All' }, { id: 'stories', label: 'Stories' }, { id: 'audiobooks', label: 'Audio' }].map((tab) => (
+              <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id as TabType)} 
-                whileHover={{ scale: 1.02 }} 
-                whileTap={{ scale: 0.98 }} 
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-violet-500/20 text-violet-300 border border-violet-500/20' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`px-4 md:px-5 py-2 rounded-full text-xs md:text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-pink-500/20 text-pink-300' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 {tab.label}
-              </motion.button>
+              </button>
             ))}
           </div>
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <input 
               type="text" 
               placeholder="Search..." 
               value={searchTerm} 
               onChange={(e) => setSearchTerm(e.target.value)} 
-              className="w-full md:w-64 px-4 py-2 pl-9 bg-white/5 border border-white/10 rounded-full text-sm focus:outline-none focus:border-violet-500/30 transition-colors" 
+              className="w-full md:w-64 px-4 py-2 pl-9 bg-white/5 border border-white/10 rounded-full text-sm focus:outline-none focus:border-pink-500/30 transition-colors" 
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">◎</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
           </div>
         </div>
       </section>
 
       {/* Content */}
-      <section className="py-12 px-6 pb-32">
-        <div className="max-w-6xl mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={activeTab} 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -20 }} 
-              className="space-y-8"
-            >
-              {/* Stories Section */}
-              {displayStories && filteredStories.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-                    <span className="text-violet-400/60">◈</span> Stories
-                  </h3>
-                  <div className="grid gap-4">
-                    {filteredStories.map((story, index) => (
-                      <motion.div
-                        key={story.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.03, duration: 0.2 }}
-                        whileHover={{ x: 4 }}
-                        onClick={() => setSelectedStory(story)}
-                        className="p-5 bg-white/5 rounded-xl border border-white/5 hover:border-violet-500/20 cursor-pointer transition-all group"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/10 flex items-center justify-center">
-                              <span className="text-xl">📖</span>
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-200 group-hover:text-violet-300 transition-colors">{story.title}</h4>
-                              <p className="text-xs text-gray-500">
-                                {story.link ? '✓ Content linked' : 'No content yet'}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-gray-500 group-hover:text-violet-400 transition-colors">→</span>
+      <section className="relative z-10 py-8 md:py-12 px-4 md:px-6 pb-32">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {/* Stories Section */}
+          {displayStories && filteredStories.length > 0 && (
+            <div>
+              <h3 className="text-base md:text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                <span className="text-pink-400/60">📖</span> Stories
+              </h3>
+              <div className="grid gap-3">
+                {filteredStories.map((story) => (
+                  <div
+                    key={story.id}
+                    onClick={() => setSelectedStory(story)}
+                    className="p-4 md:p-5 bg-white/5 rounded-xl border border-white/5 hover:border-pink-500/30 cursor-pointer transition-colors hover:bg-white/[0.08] group"
+                  >
+                    <div className="flex items-center justify-between gap-3 md:gap-4">
+                      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 border border-pink-500/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg md:text-xl">📖</span>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Audiobooks Section */}
-              {displayAudiobooks && filteredAudiobooks.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-                    <span className="text-indigo-400/60">♫</span> Audiobooks
-                  </h3>
-                  <div className="grid gap-4">
-                    {filteredAudiobooks.map((audio, index) => (
-                      <motion.div
-                        key={audio.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.03, duration: 0.2 }}
-                        whileHover={{ x: 4 }}
-                        onClick={() => setCurrentAudiobook(audio)}
-                        className="p-5 bg-white/5 rounded-xl border border-white/5 hover:border-indigo-500/20 cursor-pointer transition-all group"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/10 flex items-center justify-center">
-                              <span className="text-xl">🎧</span>
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-200 group-hover:text-indigo-300 transition-colors">{audio.title}</h4>
-                              <p className="text-xs text-gray-500">
-                                {audio.link ? '✓ Audio linked' : 'No audio yet'}
-                              </p>
-                            </div>
-                          </div>
-                          <motion.button 
-                            whileHover={{ scale: 1.1 }} 
-                            whileTap={{ scale: 0.9 }} 
-                            className="w-10 h-10 rounded-full bg-violet-500/20 border border-violet-500/20 flex items-center justify-center text-violet-300 hover:bg-violet-500/30 transition-all"
-                          >
-                            ▶
-                          </motion.button>
+                        <div className="min-w-0">
+                          <h4 className="font-medium text-gray-200 group-hover:text-pink-300 transition-colors text-sm md:text-base truncate">{story.title}</h4>
+                          <p className="text-xs text-gray-500">
+                            {story.content ? '✓ Content added' : story.link ? '✓ Link added' : 'No content yet'}
+                          </p>
                         </div>
-                      </motion.div>
-                    ))}
+                      </div>
+                      <span className="text-gray-500 group-hover:text-pink-400 transition-colors flex-shrink-0">→</span>
+                    </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
+            </div>
+          )}
 
-              {/* Empty State */}
-              {filteredStories.length === 0 && filteredAudiobooks.length === 0 && (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  className="text-center py-20"
-                >
-                  <span className="text-4xl mb-4 block opacity-50">◎</span>
-                  <p className="text-gray-500 mb-4">No content yet</p>
-                  <Link href="/admin">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-6 py-2 bg-violet-500/20 border border-violet-500/30 rounded-full text-sm text-violet-300 hover:bg-violet-500/30 transition-all"
-                    >
-                      Add Content →
-                    </motion.button>
-                  </Link>
-                </motion.div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+          {/* Audiobooks Section */}
+          {displayAudiobooks && filteredAudiobooks.length > 0 && (
+            <div>
+              <h3 className="text-base md:text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                <span className="text-fuchsia-400/60">🎧</span> Audiobooks
+              </h3>
+              <div className="grid gap-3">
+                {filteredAudiobooks.map((audio) => (
+                  <div
+                    key={audio.id}
+                    onClick={() => setCurrentAudiobook(audio)}
+                    className="p-4 md:p-5 bg-white/5 rounded-xl border border-white/5 hover:border-fuchsia-500/30 cursor-pointer transition-colors hover:bg-white/[0.08] group"
+                  >
+                    <div className="flex items-center justify-between gap-3 md:gap-4">
+                      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-pink-500/20 border border-fuchsia-500/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg md:text-xl">🎧</span>
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-medium text-gray-200 group-hover:text-fuchsia-300 transition-colors text-sm md:text-base truncate">{audio.title}</h4>
+                          <p className="text-xs text-gray-500">
+                            {audio.link ? '✓ Audio linked' : 'No audio yet'}
+                          </p>
+                        </div>
+                      </div>
+                      <button className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-pink-500/20 border border-pink-500/20 flex items-center justify-center text-pink-300 hover:bg-pink-500/30 transition-colors flex-shrink-0">
+                        ▶
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {filteredStories.length === 0 && filteredAudiobooks.length === 0 && (
+            <div className="text-center py-20">
+              <span className="text-4xl mb-4 block opacity-50">📭</span>
+              <p className="text-gray-500 mb-4">No content yet</p>
+              <Link href="/admin">
+                <button className="px-6 py-2 bg-pink-500/20 border border-pink-500/30 rounded-full text-sm text-pink-300 hover:bg-pink-500/30 transition-colors">
+                  Add Content →
+                </button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Story Modal - Fullscreen Reading Experience */}
+      {/* Story Reader Modal */}
       {selectedStory && (
-        <div 
-          className={`fixed inset-0 z-50 overflow-hidden reading-theme-${readingTheme} reading-size-${fontSize} reading-font-${fontFamily}`}
-        >
-          {/* Progress Bar - Always visible at top */}
+        <div className={`fixed inset-0 z-50 overflow-hidden reading-theme-${readingTheme} reading-size-${fontSize} reading-font-${fontFamily}`}>
+          {/* Progress Bar */}
           <div className="fixed top-0 left-0 right-0 h-1 bg-black/20 z-[60]">
             <div 
               className="h-full bg-gradient-to-r from-pink-500 to-fuchsia-500 transition-all duration-150"
@@ -370,173 +287,149 @@ export default function SeriesPage() {
             />
           </div>
 
-          {/* Floating Settings Button - Always visible on right side */}
-          <button 
-            onClick={() => setShowSettings(!showSettings)}
-            className={`fixed right-4 top-16 z-[60] w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 ${
-              showSettings 
-                ? 'bg-pink-500 text-white' 
-                : 'bg-black/60 backdrop-blur-md text-white/80 hover:bg-black/80'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
-
-          {/* Floating Close Button - Always visible on left side */}
+          {/* Close Button */}
           <button 
             onClick={() => setSelectedStory(null)}
-            className="fixed left-4 top-16 z-[60] w-12 h-12 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/80 hover:bg-black/80 shadow-lg transition-all active:scale-95"
+            className="fixed left-4 top-4 z-[60] w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/80 hover:bg-black/80 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            ✕
           </button>
 
-          {/* Settings Panel - Fixed position dropdown */}
-          <AnimatePresence>
-            {showSettings && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                className="fixed right-4 top-32 z-[59] w-72 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-              >
-                <div className="p-4 space-y-4">
-                  {/* Theme Selection */}
-                  <div>
-                    <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Theme</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {themeOptions.map((theme) => (
-                        <button
-                          key={theme.id}
-                          onClick={() => setReadingTheme(theme.id)}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-all active:scale-95 ${
-                            readingTheme === theme.id 
-                              ? 'bg-pink-500/30 ring-2 ring-pink-500/50 text-white' 
-                              : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                          }`}
-                        >
-                          <span className="text-lg">{theme.icon}</span>
-                          <span className="opacity-70">{theme.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+          {/* Settings Button */}
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            className={`fixed right-4 top-4 z-[60] w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              showSettings ? 'bg-pink-500 text-white' : 'bg-black/60 backdrop-blur-md text-white/80 hover:bg-black/80'
+            }`}
+          >
+            ⚙️
+          </button>
 
-                  {/* Font Size */}
-                  <div>
-                    <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Size</p>
-                    <div className="flex gap-2">
-                      {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setFontSize(size)}
-                          className={`flex-1 py-2 rounded-lg flex items-center justify-center transition-all active:scale-95 ${
-                            fontSize === size 
-                              ? 'bg-pink-500/30 ring-2 ring-pink-500/50 text-white' 
-                              : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                          }`}
-                        >
-                          <span className={size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-lg'}>Aa</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Font Family */}
-                  <div>
-                    <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Font</p>
-                    <div className="flex gap-2">
-                      {[
-                        { id: 'serif', label: 'Serif', sample: 'Aa' },
-                        { id: 'sans', label: 'Sans', sample: 'Aa' },
-                        { id: 'mono', label: 'Mono', sample: 'Aa' }
-                      ].map((font) => (
-                        <button
-                          key={font.id}
-                          onClick={() => setFontFamily(font.id as FontFamily)}
-                          className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-1 transition-all active:scale-95 ${
-                            fontFamily === font.id 
-                              ? 'bg-pink-500/30 ring-2 ring-pink-500/50 text-white' 
-                              : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                          }`}
-                        >
-                          <span className={`text-lg ${font.id === 'serif' ? 'font-reading' : font.id === 'mono' ? 'font-mono' : 'font-sans'}`}>{font.sample}</span>
-                          <span className="text-xs opacity-70">{font.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-            {/* Content Area - Full screen reading */}
-            <div 
-              ref={contentRef} 
-              onScroll={handleScroll}
-              onClick={() => showSettings && setShowSettings(false)}
-              className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain pt-8 pb-20 reading-scroll"
-            >
-              <div className="reader-content py-6">
-                {/* Chapter Title */}
-                <div className="mb-8 text-center">
-                  <h2 className="text-xl md:text-2xl font-bold mb-2">{selectedStory.title}</h2>
-                  <p className="text-sm opacity-50">{series?.title}</p>
-                </div>
-
-                {/* Creator Credit */}
-                {selectedStory.creditName && (
-                  <div className="mb-8 pb-4 border-b border-current/10 text-center">
-                    <p className="text-xs opacity-50 uppercase tracking-wider mb-1">Created by</p>
-                    {selectedStory.creditLink ? (
-                      <a 
-                        href={selectedStory.creditLink} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-pink-400 hover:text-pink-300 transition-colors font-medium inline-flex items-center gap-1"
+          {/* Settings Panel */}
+          {showSettings && (
+            <div className="fixed right-4 top-16 z-[59] w-72 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+              <div className="p-4 space-y-4">
+                <div>
+                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Theme</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {themeOptions.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => setReadingTheme(theme.id)}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors ${
+                          readingTheme === theme.id 
+                            ? 'bg-pink-500/30 ring-2 ring-pink-500/50 text-white' 
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                        }`}
                       >
-                        {selectedStory.creditName}
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    ) : (
-                      <p className="font-medium">{selectedStory.creditName}</p>
-                    )}
-                  </div>
-                )}
-                
-                {selectedStory.content ? (
-                  <article className="reading-content break-words">
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: selectedStory.content }}
-                    />
-                  </article>
-                ) : selectedStory.link ? (
-                  <iframe 
-                    src={selectedStory.link.includes('/preview') ? selectedStory.link : selectedStory.link.replace('/view', '/preview').replace('/edit', '/preview')} 
-                    className="w-full h-[80vh] rounded-lg border border-current/10" 
-                    allow="autoplay" 
-                  />
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="opacity-50 mb-6">No content added yet</p>
-                    <Link href="/admin">
-                      <button className="px-6 py-2 bg-pink-500/20 border border-pink-500/30 rounded-full text-sm text-pink-300 active:scale-98 transition-transform">
-                        Add Link in Admin →
+                        <span className="text-lg">{theme.icon}</span>
+                        <span className="opacity-70">{theme.label}</span>
                       </button>
-                    </Link>
+                    ))}
                   </div>
-                )}
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Size</p>
+                  <div className="flex gap-2">
+                    {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setFontSize(size)}
+                        className={`flex-1 py-2 rounded-lg flex items-center justify-center transition-colors ${
+                          fontSize === size 
+                            ? 'bg-pink-500/30 ring-2 ring-pink-500/50 text-white' 
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className={size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-lg'}>Aa</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Font</p>
+                  <div className="flex gap-2">
+                    {[
+                      { id: 'serif', label: 'Serif' },
+                      { id: 'sans', label: 'Sans' },
+                      { id: 'mono', label: 'Mono' }
+                    ].map((font) => (
+                      <button
+                        key={font.id}
+                        onClick={() => setFontFamily(font.id as FontFamily)}
+                        className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
+                          fontFamily === font.id 
+                            ? 'bg-pink-500/30 ring-2 ring-pink-500/50 text-white' 
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                        }`}
+                      >
+                        {font.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Bottom Navigation - Compact floating pill */}
+          {/* Content Area */}
+          <div 
+            ref={contentRef} 
+            onScroll={handleScroll}
+            onClick={() => showSettings && setShowSettings(false)}
+            className="absolute inset-0 overflow-x-hidden overflow-y-auto pt-16 pb-24 reading-scroll"
+          >
+            <div className="reader-content py-6">
+              <div className="mb-8 text-center">
+                <h2 className="text-xl md:text-2xl font-bold mb-2">{selectedStory.title}</h2>
+                <p className="text-sm opacity-50">{series?.title}</p>
+              </div>
+
+              {selectedStory.creditName && (
+                <div className="mb-8 pb-4 border-b border-current/10 text-center">
+                  <p className="text-xs opacity-50 uppercase tracking-wider mb-1">Created by</p>
+                  {selectedStory.creditLink ? (
+                    <a 
+                      href={selectedStory.creditLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-pink-400 hover:text-pink-300 transition-colors font-medium"
+                    >
+                      {selectedStory.creditName} ↗
+                    </a>
+                  ) : (
+                    <p className="font-medium">{selectedStory.creditName}</p>
+                  )}
+                </div>
+              )}
+              
+              {selectedStory.content ? (
+                <article className="reading-content break-words">
+                  <div dangerouslySetInnerHTML={{ __html: selectedStory.content }} />
+                </article>
+              ) : selectedStory.link ? (
+                <iframe 
+                  src={selectedStory.link.includes('/preview') ? selectedStory.link : selectedStory.link.replace('/view', '/preview').replace('/edit', '/preview')} 
+                  className="w-full h-[80vh] rounded-lg border border-current/10" 
+                  allow="autoplay" 
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="opacity-50 mb-6">No content added yet</p>
+                  <Link href="/admin">
+                    <button className="px-6 py-2 bg-pink-500/20 border border-pink-500/30 rounded-full text-sm text-pink-300">
+                      Add Content in Admin →
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Navigation */}
+          {stories.length > 1 && (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[55]">
               {(() => {
                 const currentIndex = stories.findIndex(s => s.id === selectedStory.id)
@@ -547,55 +440,42 @@ export default function SeriesPage() {
                     <button
                       onClick={() => prevChapter && setSelectedStory(prevChapter)}
                       disabled={!prevChapter}
-                      className={`flex items-center justify-center gap-1 py-2 px-4 rounded-full transition-all active:scale-95 ${
-                        prevChapter 
-                          ? 'bg-white/10 hover:bg-white/20 text-white' 
-                          : 'opacity-30 cursor-not-allowed text-gray-500'
+                      className={`py-2 px-4 rounded-full transition-colors text-sm ${
+                        prevChapter ? 'bg-white/10 hover:bg-white/20 text-white' : 'opacity-30 cursor-not-allowed text-gray-500'
                       }`}
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      <span className="text-sm font-medium">Prev</span>
+                      ← Prev
                     </button>
                     
-                    <div className="flex flex-col items-center px-4 text-white">
-                      <span className="text-sm font-semibold">{currentIndex + 1} / {stories.length}</span>
-                    </div>
+                    <span className="px-3 text-white text-sm">{currentIndex + 1}/{stories.length}</span>
 
                     <button
                       onClick={() => nextChapter && setSelectedStory(nextChapter)}
                       disabled={!nextChapter}
-                      className={`flex items-center justify-center gap-1 py-2 px-4 rounded-full transition-all active:scale-95 ${
-                        nextChapter 
-                          ? 'bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:from-pink-600 hover:to-fuchsia-600 text-white' 
-                          : 'opacity-30 cursor-not-allowed text-gray-500'
+                      className={`py-2 px-4 rounded-full transition-colors text-sm ${
+                        nextChapter ? 'bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white' : 'opacity-30 cursor-not-allowed text-gray-500'
                       }`}
                     >
-                      <span className="text-sm font-medium">Next</span>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                      Next →
                     </button>
                   </div>
                 )
               })()}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
       {/* Audio Player */}
-      <AnimatePresence>
-        {currentAudiobook && (
-          <AudioPlayer 
-            audioUrl={currentAudiobook.link || ''} 
-            title={currentAudiobook.title || 'Untitled'} 
-            author={series?.title || 'Unknown'} 
-            coverEmoji="🎧" 
-            onClose={() => setCurrentAudiobook(null)} 
-          />
-        )}
-      </AnimatePresence>
+      {currentAudiobook && (
+        <AudioPlayer 
+          audioUrl={currentAudiobook.link || ''} 
+          title={currentAudiobook.title || 'Untitled'} 
+          author={series?.title || 'Unknown'} 
+          coverEmoji="🎧" 
+          onClose={() => setCurrentAudiobook(null)} 
+        />
+      )}
 
       <Footer />
     </main>
