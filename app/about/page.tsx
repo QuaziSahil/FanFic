@@ -11,10 +11,10 @@ const teamMembers = [
 
 const credits = [
   {
-    title: 'Shadow Slave - Peaceful Dreams',
-    author: 'Necroz2002',
-    link: 'https://archiveofourown.org/users/Necroz2002/pseuds/Necroz2002',
-    description: 'An amazing Shadow Slave alternate universe fan fiction',
+    title: 'Shadow Slave Fan Fiction',
+    author: 'Community Contributors',
+    link: '',
+    description: 'Fan-created content from the Shadow Slave universe',
   },
 ]
 

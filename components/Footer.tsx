@@ -134,7 +134,7 @@ export default function Footer() {
         {/* Credits */}
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-600">
-            Original stories by <span className="text-pink-400/80">Necroz2002</span> • 
+            Fan Fiction Stories • 
             Site by <span className="text-fuchsia-400/80">QuaziSahil</span>
           </p>
         </div>

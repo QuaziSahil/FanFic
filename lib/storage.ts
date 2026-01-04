@@ -110,7 +110,7 @@ function getDefaultSeries(): Series[] {
     {
       id: 'shadow-slave-peaceful-dreams',
       title: 'Shadow Slave - Peaceful Dreams... well... kinda.',
-      description: 'A Shadow Slave fan fiction by Necroz2002. An alternate universe story featuring Sunny, Cassie, Nephis and more characters from the Shadow Slave universe.',
+      description: 'An alternate universe story featuring Sunny, Cassie, Nephis and more characters from the Shadow Slave universe.',
       icon: '🌙',
       image: '/shadow-slave-cover.jpg',
       chapters: [
@@ -346,8 +346,8 @@ function getDefaultSeries(): Series[] {
 
 <p class="chapter-end">— End of Chapter 1 —</p>`,
           type: 'story',
-          creditName: 'Necroz2002',
-          creditLink: 'https://archiveofourown.org/users/Necroz2002/pseuds/Necroz2002',
+          creditName: '',
+          creditLink: '',
           createdAt: new Date().toISOString()
         }
       ],
