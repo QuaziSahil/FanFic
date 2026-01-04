@@ -3,7 +3,9 @@
 import { initializeApp, getApps } from 'firebase/app'
 import { 
   getAuth, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   signOut, 
   onAuthStateChanged, 
@@ -40,41 +42,52 @@ if (typeof window !== 'undefined') {
   db = getFirestore(app)
 }
 
-// Sign in with Google
+// Create/update user in Firestore
+export const createOrUpdateUser = async (user: User) => {
+  if (!db || !user) return
+  try {
+    const userRef = doc(db, 'users', user.uid)
+    const userSnap = await getDoc(userRef)
+    
+    if (!userSnap.exists()) {
+      // New user - create profile
+      await setDoc(userRef, {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+        bookmarks: [],
+        readingHistory: [],
+        readingProgress: {},
+        preferredTheme: 'night'
+      })
+    } else {
+      // Existing user - update last login
+      await updateDoc(userRef, {
+        lastLogin: serverTimestamp()
+      })
+    }
+  } catch (error) {
+    console.error('Error creating/updating user:', error)
+  }
+}
+
+// Sign in with Google - try popup first, fall back to redirect
 export const signInWithGoogle = async () => {
   if (!auth) return null
   try {
+    // Try popup first
     const result = await signInWithPopup(auth, googleProvider)
-    const user = result.user
-    
-    // Create/update user document in Firestore
-    if (db && user) {
-      const userRef = doc(db, 'users', user.uid)
-      const userSnap = await getDoc(userRef)
-      
-      if (!userSnap.exists()) {
-        // New user - create profile
-        await setDoc(userRef, {
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-          createdAt: serverTimestamp(),
-          lastLogin: serverTimestamp(),
-          bookmarks: [],
-          readingHistory: [],
-          readingProgress: {},
-          preferredTheme: 'night'
-        })
-      } else {
-        // Existing user - update last login
-        await updateDoc(userRef, {
-          lastLogin: serverTimestamp()
-        })
-      }
+    await createOrUpdateUser(result.user)
+    return result.user
+  } catch (error: any) {
+    // If popup blocked or failed, use redirect
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+      console.log('Popup blocked, using redirect...')
+      await signInWithRedirect(auth, googleProvider)
+      return null
     }
-    
-    return user
-  } catch (error) {
     console.error('Error signing in with Google:', error)
     return null
   }

@@ -1,7 +1,8 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { User, onAuthStateChanged, auth, getUserData, UserData } from '@/lib/firebase'
+import { User, onAuthStateChanged, auth, getUserData, UserData, createOrUpdateUser } from '@/lib/firebase'
+import { getRedirectResult } from 'firebase/auth'
 
 interface AuthContextType {
   user: User | null
@@ -34,6 +35,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       return
     }
+
+    // Handle redirect result (for when popup is blocked)
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        await createOrUpdateUser(result.user)
+      }
+    }).catch((error) => {
+      console.error('Redirect result error:', error)
+    })
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
