@@ -104,7 +104,7 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section */}
-      <section ref={heroRef} className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-20">
+      <section ref={heroRef} className="relative z-10 min-h-[100svh] flex flex-col items-center justify-center px-4 md:px-6 pt-24 pb-12">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -119,17 +119,17 @@ export default function Home() {
             className="mb-8"
           >
             <motion.div 
-              className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 border border-pink-500/20 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 md:gap-3 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 border border-pink-500/20 backdrop-blur-sm"
               whileHover={{ scale: 1.05, borderColor: 'rgba(236, 72, 153, 0.4)' }}
             >
               <motion.span 
                 animate={{ rotate: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="text-pink-400"
+                className="text-pink-400 text-sm"
               >
                 ✦
               </motion.span>
-              <span className="text-pink-200 text-sm font-medium">Welcome to the Future of Fan Fiction</span>
+              <span className="text-pink-200 text-xs md:text-sm font-medium">Welcome to FanFic</span>
               <motion.span 
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
@@ -142,7 +142,7 @@ export default function Home() {
 
           {/* Main Title */}
           <motion.h1 
-            className="text-6xl md:text-8xl lg:text-9xl font-bold mb-8 leading-none"
+            className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 md:mb-8 leading-[1.1]"
           >
             <motion.span 
               initial={{ opacity: 0, y: 50 }}
@@ -167,7 +167,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
+            className="text-base sm:text-lg md:text-xl text-gray-400 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed px-2"
           >
             Discover incredible{' '}
             <span className="text-pink-300 font-medium">fan fiction</span>{' '}
@@ -187,7 +187,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(236, 72, 153, 0.3)' }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-500 text-white font-semibold text-lg overflow-hidden"
+                className="group relative px-6 py-3 md:px-8 md:py-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-500 text-white font-semibold text-base md:text-lg overflow-hidden w-full sm:w-auto"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Start Reading
@@ -211,7 +211,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05, borderColor: 'rgba(236, 72, 153, 0.5)' }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 rounded-full border-2 border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                className="px-6 py-3 md:px-8 md:py-4 rounded-full border-2 border-white/10 text-white font-semibold text-base md:text-lg hover:bg-white/5 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 <motion.span
                   animate={{ scale: [1, 1.2, 1] }}
@@ -225,28 +225,6 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-2"
-          >
-            <span className="text-gray-500 text-sm">Scroll to explore</span>
-            <div className="w-6 h-10 border-2 border-pink-500/30 rounded-full flex justify-center pt-2">
-              <motion.div 
-                className="w-1.5 h-1.5 bg-pink-400 rounded-full"
-                animate={{ y: [0, 12, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            </div>
-          </motion.div>
-        </motion.div>
       </section>
 
       {/* Featured Section */}
