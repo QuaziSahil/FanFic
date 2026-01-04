@@ -345,16 +345,36 @@ button:focus-visible, a:focus-visible {
 
 .reading-content .dialogue {
   text-indent: 0;
-  padding-left: 1rem;
-  border-left: 2px solid rgba(139, 92, 246, 0.3);
-  margin: 1.5rem 0;
-  font-style: italic;
+  padding-left: 1.25rem;
+  border-left: 3px solid rgba(139, 92, 246, 0.4);
+  margin: 1.25rem 0;
+  background: rgba(139, 92, 246, 0.03);
+  padding: 0.75rem 1rem 0.75rem 1.25rem;
+  border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .reading-content .thought {
   text-indent: 0;
-  color: rgba(199, 181, 253, 0.8);
+  color: rgba(199, 181, 253, 0.85);
   font-style: italic;
+  padding: 0.5rem 1rem;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 0.5rem;
+  margin: 1.25rem 0;
+}
+
+/* Chapter title in content */
+.reading-content .chapter-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  margin-top: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.02em;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.9;
 }
 
 .reading-content .scene-break {
@@ -386,15 +406,21 @@ button:focus-visible, a:focus-visible {
   background: linear-gradient(180deg, #0a0a0f 0%, #0d0d14 100%);
 }
 
+/* Reader content container - prevents overflow */
 .reader-content {
   max-width: 720px;
   margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Mobile-optimized reading */
 .reading-scroll {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 /* Safe areas for mobile */
@@ -411,17 +437,36 @@ button:focus-visible, a:focus-visible {
   font-family: 'Crimson Pro', Georgia, serif;
   line-height: 1.9;
   letter-spacing: 0.01em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .reading-content p {
   margin-bottom: 1.5em;
-  text-align: justify;
-  text-justify: inter-word;
-  hyphens: auto;
+  text-align: left;
+}
+
+/* First paragraph with drop cap */
+.reading-content > div > p:first-of-type,
+.reading-content .first-paragraph {
+  text-indent: 0 !important;
+}
+
+.reading-content > div > p:first-of-type::first-letter,
+.reading-content .first-paragraph::first-letter {
+  float: left;
+  font-size: 3.5rem;
+  line-height: 1;
+  font-weight: 700;
+  margin-right: 0.5rem;
+  margin-top: 0.1rem;
+  color: #a78bfa;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .reading-content em {
   font-style: italic;
+  color: #c4b5fd;
 }
 
 .reading-content strong {
