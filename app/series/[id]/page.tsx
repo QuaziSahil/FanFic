@@ -586,11 +586,11 @@ export default function SeriesPage() {
 
       {/* Audio Player */}
       <AnimatePresence>
-        {currentAudiobook && currentAudiobook.link && (
+        {currentAudiobook && (
           <AudioPlayer 
-            audioUrl={currentAudiobook.link} 
-            title={currentAudiobook.title} 
-            author={series.title} 
+            audioUrl={currentAudiobook.link || ''} 
+            title={currentAudiobook.title || 'Untitled'} 
+            author={series?.title || 'Unknown'} 
             coverEmoji="🎧" 
             onClose={() => setCurrentAudiobook(null)} 
           />

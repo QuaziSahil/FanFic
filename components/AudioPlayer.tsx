@@ -20,28 +20,33 @@ export default function AudioPlayer({ audioUrl, title, author, coverEmoji = 'ðŸ“
   const [showVolume, setShowVolume] = useState(false)
   const [error, setError] = useState(false)
   const [isGoogleDrive, setIsGoogleDrive] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Convert Google Drive link to direct playable link
   const getPlayableUrl = (url: string) => {
-    if (!url) return ''
+    if (!url || typeof url !== 'string') return ''
     
-    // Google Drive file link pattern: https://drive.google.com/file/d/FILE_ID/view
-    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
-    if (driveMatch) {
-      setIsGoogleDrive(true)
-      // Use the preview endpoint which sometimes works better
-      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`
-    }
-    
-    // Google Drive direct download link
-    const ucMatch = url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/)
-    if (ucMatch) {
-      setIsGoogleDrive(true)
+    try {
+      // Google Drive file link pattern: https://drive.google.com/file/d/FILE_ID/view
+      const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
+      if (driveMatch) {
+        setIsGoogleDrive(true)
+        // Use the preview endpoint which sometimes works better
+        return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`
+      }
+      
+      // Google Drive direct download link
+      const ucMatch = url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/)
+      if (ucMatch) {
+        setIsGoogleDrive(true)
+        return url
+      }
+      
+      setIsGoogleDrive(false)
       return url
+    } catch {
+      return url || ''
     }
-    
-    setIsGoogleDrive(false)
-    return url
   }
 
   const playableUrl = getPlayableUrl(audioUrl)
@@ -62,22 +67,31 @@ export default function AudioPlayer({ audioUrl, title, author, coverEmoji = 'ðŸ“
     if (!audio) return
 
     const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
+    const updateDuration = () => {
+      setDuration(audio.duration)
+      setIsLoading(false)
+    }
     const handleEnded = () => setIsPlaying(false)
-    const handleError = () => setError(true)
+    const handleError = () => {
+      setError(true)
+      setIsLoading(false)
+    }
+    const handleCanPlay = () => setIsLoading(false)
 
     audio.addEventListener('timeupdate', updateTime)
     audio.addEventListener('loadedmetadata', updateDuration)
     audio.addEventListener('ended', handleEnded)
     audio.addEventListener('error', handleError)
+    audio.addEventListener('canplay', handleCanPlay)
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime)
       audio.removeEventListener('loadedmetadata', updateDuration)
       audio.removeEventListener('ended', handleEnded)
       audio.removeEventListener('error', handleError)
+      audio.removeEventListener('canplay', handleCanPlay)
     }
-  }, [])
+  }, [playableUrl])
 
   const togglePlay = () => {
     const audio = audioRef.current
