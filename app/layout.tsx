@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="animated-bg">
-          {/* Floating particles will be added via JS */}
-        </div>
-        {children}
+        <AuthProvider>
+          <div className="animated-bg">
+            {/* Floating particles will be added via JS */}
+          </div>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )

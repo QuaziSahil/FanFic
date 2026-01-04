@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -9,6 +9,8 @@ import ParticleBackground from '@/components/ParticleBackground'
 import Footer from '@/components/Footer'
 import AudioPlayer from '@/components/AudioPlayer'
 import { getSeriesById, Series, Chapter } from '@/lib/storage'
+import { useAuth } from '@/contexts/AuthContext'
+import { toggleBookmark, addToReadingHistory, updateReadingProgress } from '@/lib/firebase'
 
 type TabType = 'all' | 'stories' | 'audiobooks'
 type ReadingTheme = 'night' | 'day' | 'sepia' | 'ocean' | 'forest' | 'rose'
@@ -34,11 +36,52 @@ export default function SeriesPage() {
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>('night')
   const [fontSize, setFontSize] = useState<FontSize>('md')
   const [showSettings, setShowSettings] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [bookmarking, setBookmarking] = useState(false)
+  const { user, userData, refreshUserData } = useAuth()
+  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const data = getSeriesById(seriesId)
     setSeries(data)
   }, [seriesId])
+
+  // Check if series is bookmarked
+  useEffect(() => {
+    if (userData?.bookmarks) {
+      setIsBookmarked(userData.bookmarks.includes(seriesId))
+    }
+  }, [userData, seriesId])
+
+  // Track reading progress
+  const handleScroll = useCallback(() => {
+    if (!contentRef.current || !user || !selectedStory) return
+    
+    const element = contentRef.current
+    const scrollTop = element.scrollTop
+    const scrollHeight = element.scrollHeight - element.clientHeight
+    const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0
+    
+    // Update progress in Firebase (debounced by only updating every 10%)
+    const roundedProgress = Math.round(progress / 10) * 10
+    updateReadingProgress(user.uid, selectedStory.id, roundedProgress)
+  }, [user, selectedStory])
+
+  // Add to reading history when opening a story
+  useEffect(() => {
+    if (user && selectedStory && series) {
+      addToReadingHistory(user.uid, series.id, selectedStory.id)
+    }
+  }, [user, selectedStory, series])
+
+  const handleToggleBookmark = async () => {
+    if (!user) return
+    setBookmarking(true)
+    const result = await toggleBookmark(user.uid, seriesId)
+    setIsBookmarked(result)
+    await refreshUserData()
+    setBookmarking(false)
+  }
 
   if (!series) {
     return (
@@ -95,10 +138,33 @@ export default function SeriesPage() {
                 series.icon
               )}
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-                <span className="gradient-text">{series.title}</span>
-              </h1>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex-1">
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
+                  <span className="gradient-text">{series.title}</span>
+                </h1>
+                {/* Bookmark Button */}
+                {user && (
+                  <motion.button
+                    onClick={handleToggleBookmark}
+                    disabled={bookmarking}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                      isBookmarked 
+                        ? 'bg-violet-500/30 text-violet-300 border border-violet-500/50' 
+                        : 'bg-white/5 text-gray-500 hover:text-violet-300 border border-white/10 hover:border-violet-500/30'
+                    }`}
+                  >
+                    {bookmarking ? (
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : isBookmarked ? '🔖' : '📑'}
+                  </motion.button>
+                )}
+              </div>
               <p className="text-gray-500">{series.description}</p>
               <div className="flex gap-4 mt-3 text-sm text-gray-400">
                 <span>📖 {stories.length} stories</span>
@@ -359,7 +425,7 @@ export default function SeriesPage() {
               </AnimatePresence>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div ref={contentRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-6">
                 {/* Creator Credit */}
                 {selectedStory.creditName && (
                   <div className="mb-6 pb-4 border-b border-current/10">

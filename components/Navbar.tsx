@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import UserMenu from './UserMenu'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -58,15 +59,7 @@ export default function Navbar() {
               {item}
             </motion.a>
           ))}
-          <Link href="/admin">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-5 py-2 bg-violet-500/10 border border-violet-500/20 rounded-full text-violet-300 text-sm font-medium hover:bg-violet-500/20 hover:border-violet-500/30 transition-all"
-            >
-              Sign In
-            </motion.button>
-          </Link>
+          <UserMenu />
         </div>
 
         {/* Mobile Menu Button */}
