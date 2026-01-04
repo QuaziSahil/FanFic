@@ -22,11 +22,24 @@ export default function AudioPlayer({ audioUrl, title, author, coverEmoji = 'ðŸ“
   const [isGoogleDrive, setIsGoogleDrive] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Convert Google Drive link to direct playable link
+  // Convert Google Drive or Internet Archive link to direct playable link
   const getPlayableUrl = (url: string) => {
     if (!url || typeof url !== 'string') return ''
     
     try {
+      // Internet Archive page link: https://archive.org/details/IDENTIFIER
+      const archiveMatch = url.match(/archive\.org\/details\/([^/?#]+)/)
+      if (archiveMatch) {
+        const identifier = archiveMatch[1]
+        // Internet Archive direct download format - try MP3 first
+        return `https://archive.org/download/${identifier}/${identifier}.mp3`
+      }
+      
+      // Internet Archive direct download link (already correct format)
+      if (url.includes('archive.org/download/')) {
+        return url
+      }
+      
       // Google Drive file link pattern: https://drive.google.com/file/d/FILE_ID/view
       const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
       if (driveMatch) {
