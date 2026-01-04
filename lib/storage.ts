@@ -22,11 +22,6 @@ export interface Series {
 }
 
 const STORAGE_KEY = 'fanfic_content'
-const ADMIN_PASSWORD = 'Sahil388'
-
-export function getAdminPassword(): string {
-  return ADMIN_PASSWORD
-}
 
 export function getAllSeries(): Series[] {
   if (typeof window === 'undefined') return []

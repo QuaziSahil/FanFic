@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getAllSeries, addSeries, deleteSeries, addChapter, deleteChapter, getAdminPassword, Series, resetToDefaults } from '@/lib/storage'
+import { getAllSeries, addSeries, deleteSeries, addChapter, deleteChapter, Series } from '@/lib/storage'
+import { auth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from '@/lib/firebase'
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [series, setSeries] = useState<Series[]>([])
@@ -28,20 +31,36 @@ export default function AdminPage() {
     { title: '', link: '' }
   ])
 
+  // Listen to auth state
   useEffect(() => {
-    if (isAuthenticated) {
-      setSeries(getAllSeries())
-    }
-  }, [isAuthenticated])
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+      setLoading(false)
+      if (currentUser) {
+        setSeries(getAllSeries())
+      }
+    })
+    return () => unsubscribe()
+  }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === getAdminPassword()) {
-      setIsAuthenticated(true)
-      setError('')
-    } else {
-      setError('Incorrect password')
+    setError('')
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+    } catch (err: any) {
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Invalid email or password')
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address')
+      } else {
+        setError('Login failed. Please try again.')
+      }
     }
+  }
+
+  const handleLogout = async () => {
+    await signOut(auth)
   }
 
   const handleAddSeries = (e: React.FormEvent) => {
@@ -138,8 +157,20 @@ export default function AdminPage() {
     setTimeout(() => setSuccessMsg(''), 3000)
   }
 
+  // Loading Screen
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </main>
+    )
+  }
+
   // Login Screen
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <main className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
         <motion.div
@@ -149,10 +180,23 @@ export default function AdminPage() {
         >
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold gradient-text mb-2">Admin Panel</h1>
-            <p className="text-gray-500">Enter password to access</p>
+            <p className="text-gray-500">Sign in to manage content</p>
           </div>
           
           <form onSubmit={handleLogin} className="bg-white/5 border border-white/10 rounded-2xl p-8">
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-violet-500/50 transition-colors"
+                placeholder="your@email.com"
+                autoFocus
+                required
+              />
+            </div>
+            
             <div className="mb-6">
               <label className="block text-sm text-gray-400 mb-2">Password</label>
               <input
@@ -160,8 +204,8 @@ export default function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-violet-500/50 transition-colors"
-                placeholder="Enter admin password"
-                autoFocus
+                placeholder="Enter password"
+                required
               />
               {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
             </div>
@@ -172,12 +216,12 @@ export default function AdminPage() {
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl font-medium hover:from-violet-500 hover:to-indigo-500 transition-all"
             >
-              Login
+              Sign In
             </motion.button>
           </form>
           
           <p className="text-center text-gray-600 text-sm mt-6">
-            Default password: fanfic2024
+            Only authorized admins can access this panel
           </p>
         </motion.div>
       </main>
@@ -213,7 +257,7 @@ export default function AdminPage() {
               ← View Site
             </a>
             <button
-              onClick={() => setIsAuthenticated(false)}
+              onClick={handleLogout}
               className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-400 hover:text-white hover:border-white/20 transition-all"
             >
               Logout
