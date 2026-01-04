@@ -1,3 +1,5 @@
+'use client'
+
 import { initializeApp, getApps } from 'firebase/app'
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth'
 
@@ -12,8 +14,13 @@ const firebaseConfig = {
 }
 
 // Initialize Firebase only if not already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-const auth = getAuth(app)
+let app
+let auth: ReturnType<typeof getAuth>
+
+if (typeof window !== 'undefined') {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+  auth = getAuth(app)
+}
 
 export { auth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
 export type { User }

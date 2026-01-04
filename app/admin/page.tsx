@@ -34,6 +34,10 @@ export default function AdminPage() {
 
   // Listen to auth state
   useEffect(() => {
+    if (!auth) {
+      setLoading(false)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       setLoading(false)
@@ -46,6 +50,10 @@ export default function AdminPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!auth) {
+      setError('Auth not initialized')
+      return
+    }
     setError('')
     setSigningIn(true)
     try {
@@ -67,7 +75,7 @@ export default function AdminPage() {
   }
 
   const handleLogout = async () => {
-    await signOut(auth)
+    if (auth) await signOut(auth)
   }
 
   const handleAddSeries = (e: React.FormEvent) => {
