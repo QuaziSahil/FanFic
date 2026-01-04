@@ -483,7 +483,7 @@ export default function SeriesPage() {
               onClick={handleContentTap}
               className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain pt-16 pb-24 reading-scroll"
             >
-              <div className="reader-content px-4 md:px-6 py-6 max-w-full">
+              <div className="reader-content py-6">
                 {/* Creator Credit */}
                 {selectedStory.creditName && (
                   <div className="mb-8 pb-4 border-b border-current/10 text-center">

@@ -410,10 +410,16 @@ button:focus-visible, a:focus-visible {
 .reader-content {
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   box-sizing: border-box;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+@media (max-width: 640px) {
+  .reader-content {
+    padding: 0 1.25rem;
+  }
 }
 
 /* Mobile-optimized reading */
@@ -444,6 +450,7 @@ button:focus-visible, a:focus-visible {
 .reading-content p {
   margin-bottom: 1.5em;
   text-align: left;
+  padding: 0;
 }
 
 /* First paragraph with drop cap */
@@ -471,6 +478,27 @@ button:focus-visible, a:focus-visible {
 
 .reading-content strong {
   font-weight: 600;
+}
+
+/* Dialogue - should NOT have extra left margin since container already has padding */
+.reading-content .dialogue {
+  text-indent: 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid rgba(139, 92, 246, 0.4);
+  margin: 1.25rem 0;
+  background: rgba(139, 92, 246, 0.03);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Thought/internal monologue */
+.reading-content .thought {
+  text-indent: 0;
+  color: rgba(199, 181, 253, 0.85);
+  font-style: italic;
+  padding: 0.5rem 1rem;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 0.5rem;
+  margin: 1.25rem 0;
 }
 
 /* Font family variants */
