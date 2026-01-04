@@ -80,31 +80,26 @@ export default function Footer() {
           {/* Series */}
           <div>
             <h4 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
-              <span className="text-pink-400">⭐</span> Popular Series
+              <span className="text-pink-400">⭐</span> Featured Series
             </h4>
             <ul className="space-y-3">
-              {[
-                { name: 'Harry Potter', emoji: '🧙‍♂️' },
-                { name: 'Marvel Universe', emoji: '🦸' },
-                { name: 'Star Wars', emoji: '⚔️' },
-                { name: 'Anime Worlds', emoji: '🌸' },
-              ].map((series, i) => (
-                <motion.li 
-                  key={series.name}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 + 0.2 }}
+              <motion.li 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Link 
+                  href="/browse"
+                  className="text-gray-400 text-sm hover:text-pink-300 transition-colors flex items-center gap-2 group"
                 >
-                  <Link 
-                    href="/browse"
-                    className="text-gray-400 text-sm hover:text-pink-300 transition-colors flex items-center gap-2 group"
-                  >
-                    <span className="opacity-50 group-hover:opacity-100 transition-opacity">{series.emoji}</span>
-                    <span className="text-hover-underline">{series.name}</span>
-                  </Link>
-                </motion.li>
-              ))}
+                  <span className="opacity-50 group-hover:opacity-100 transition-opacity">⚔️</span>
+                  <span className="text-hover-underline">Shadow Slave</span>
+                </Link>
+              </motion.li>
             </ul>
+            <p className="mt-4 text-xs text-gray-500 italic">
+              More series coming soon...
+            </p>
           </div>
 
           {/* Newsletter */}
