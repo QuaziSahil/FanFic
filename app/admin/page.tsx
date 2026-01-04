@@ -8,6 +8,7 @@ import { auth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } f
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [signingIn, setSigningIn] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -46,6 +47,7 @@ export default function AdminPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSigningIn(true)
     try {
       await signInWithEmailAndPassword(auth, email, password)
     } catch (err: any) {
@@ -59,6 +61,8 @@ export default function AdminPage() {
       } else {
         setError(`Login failed: ${err.code || err.message}`)
       }
+    } finally {
+      setSigningIn(false)
     }
   }
 
@@ -213,14 +217,13 @@ export default function AdminPage() {
               {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
             </div>
             
-            <motion.button
+            <button
               type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl font-medium hover:from-violet-500 hover:to-indigo-500 transition-all"
+              disabled={signingIn}
+              className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl font-medium hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
-            </motion.button>
+              {signingIn ? 'Signing In...' : 'Sign In'}
+            </button>
           </form>
           
           <p className="text-center text-gray-600 text-sm mt-6">
