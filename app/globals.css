@@ -387,9 +387,61 @@ button:focus-visible, a:focus-visible {
 }
 
 .reader-content {
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 2rem;
+}
+
+/* Mobile-optimized reading */
+.reading-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Safe areas for mobile */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Reading content styles */
+.reading-content {
+  font-family: 'Crimson Pro', Georgia, serif;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+}
+
+.reading-content p {
+  margin-bottom: 1.5em;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+.reading-content em {
+  font-style: italic;
+}
+
+.reading-content strong {
+  font-weight: 600;
+}
+
+/* Font family variants */
+.reading-font-serif .reading-content {
+  font-family: 'Crimson Pro', Georgia, serif;
+}
+
+.reading-font-sans .reading-content {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.8;
+}
+
+.reading-font-mono .reading-content {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95em;
+  line-height: 1.7;
 }
 
 /* CSS Animations for smooth performance */
@@ -598,19 +650,58 @@ button:focus-visible, a:focus-visible {
   color: rgba(244, 114, 182, 0.4);
 }
 
-/* Font size variants */
+/* Font size variants - Mobile optimized */
 .reading-size-sm .reading-content {
   font-size: 1rem;
+  line-height: 1.8;
 }
 
 .reading-size-md .reading-content {
   font-size: 1.125rem;
+  line-height: 1.85;
 }
 
 .reading-size-lg .reading-content {
   font-size: 1.25rem;
+  line-height: 1.9;
 }
 
 .reading-size-xl .reading-content {
-  font-size: 1.375rem;
+  font-size: 1.4rem;
+  line-height: 1.95;
+}
+
+/* Mobile-specific font sizes */
+@media (max-width: 640px) {
+  .reading-size-sm .reading-content {
+    font-size: 0.95rem;
+  }
+  
+  .reading-size-md .reading-content {
+    font-size: 1.05rem;
+  }
+  
+  .reading-size-lg .reading-content {
+    font-size: 1.15rem;
+  }
+  
+  .reading-size-xl .reading-content {
+    font-size: 1.3rem;
+  }
+
+  .reading-content p {
+    text-align: left;
+    margin-bottom: 1.25em;
+  }
+
+  .reader-content {
+    padding: 0;
+  }
+}
+
+/* Tablet optimized */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .reader-content {
+    max-width: 640px;
+  }
 }

@@ -15,6 +15,7 @@ import { toggleBookmark, addToReadingHistory, updateReadingProgress } from '@/li
 type TabType = 'all' | 'stories' | 'audiobooks'
 type ReadingTheme = 'night' | 'day' | 'sepia' | 'ocean' | 'forest' | 'rose'
 type FontSize = 'sm' | 'md' | 'lg' | 'xl'
+type FontFamily = 'serif' | 'sans' | 'mono'
 
 const themeOptions: { id: ReadingTheme; label: string; bg: string; icon: string }[] = [
   { id: 'night', label: 'Night', bg: '#0a0a0f', icon: '🌙' },
@@ -35,11 +36,15 @@ export default function SeriesPage() {
   const [currentAudiobook, setCurrentAudiobook] = useState<Chapter | null>(null)
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>('night')
   const [fontSize, setFontSize] = useState<FontSize>('md')
+  const [fontFamily, setFontFamily] = useState<FontFamily>('serif')
   const [showSettings, setShowSettings] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [bookmarking, setBookmarking] = useState(false)
+  const [showControls, setShowControls] = useState(true)
+  const [scrollProgress, setScrollProgress] = useState(0)
   const { user, userData, refreshUserData } = useAuth()
   const contentRef = useRef<HTMLDivElement>(null)
+  const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const data = getSeriesById(seriesId)
@@ -55,17 +60,49 @@ export default function SeriesPage() {
 
   // Track reading progress
   const handleScroll = useCallback(() => {
-    if (!contentRef.current || !user || !selectedStory) return
+    if (!contentRef.current) return
     
     const element = contentRef.current
     const scrollTop = element.scrollTop
     const scrollHeight = element.scrollHeight - element.clientHeight
     const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0
     
-    // Update progress in Firebase (debounced by only updating every 10%)
-    const roundedProgress = Math.round(progress / 10) * 10
-    updateReadingProgress(user.uid, selectedStory.id, roundedProgress)
-  }, [user, selectedStory])
+    setScrollProgress(progress)
+    
+    // Update progress in Firebase
+    if (user && selectedStory) {
+      const roundedProgress = Math.round(progress / 10) * 10
+      updateReadingProgress(user.uid, selectedStory.id, roundedProgress)
+    }
+
+    // Auto-hide controls on scroll (mobile reading experience)
+    setShowControls(true)
+    if (hideControlsTimeout.current) {
+      clearTimeout(hideControlsTimeout.current)
+    }
+    hideControlsTimeout.current = setTimeout(() => {
+      if (!showSettings) {
+        setShowControls(false)
+      }
+    }, 2000)
+  }, [user, selectedStory, showSettings])
+
+  // Toggle controls on tap (mobile)
+  const handleContentTap = () => {
+    if (window.innerWidth < 768) {
+      setShowControls(!showControls)
+      if (!showControls) {
+        if (hideControlsTimeout.current) {
+          clearTimeout(hideControlsTimeout.current)
+        }
+        hideControlsTimeout.current = setTimeout(() => {
+          if (!showSettings) {
+            setShowControls(false)
+          }
+        }, 3000)
+      }
+    }
+  }
 
   // Add to reading history when opening a story
   useEffect(() => {
@@ -320,7 +357,7 @@ export default function SeriesPage() {
         </div>
       </section>
 
-      {/* Story Modal */}
+      {/* Story Modal - Fullscreen Reading Experience */}
       <AnimatePresence>
         {selectedStory && (
           <motion.div 
@@ -328,116 +365,160 @@ export default function SeriesPage() {
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
-            onClick={() => setSelectedStory(null)}
+            className={`fixed inset-0 z-50 reading-theme-${readingTheme} reading-size-${fontSize} reading-font-${fontFamily}`}
           >
+            {/* Progress Bar - Always visible at top */}
+            <div className="fixed top-0 left-0 right-0 h-1 bg-black/20 z-[60]">
+              <motion.div 
+                className="h-full bg-violet-500"
+                style={{ width: `${scrollProgress}%` }}
+                transition={{ duration: 0.1 }}
+              />
+            </div>
+
+            {/* Header - Auto-hide on mobile scroll */}
             <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              onClick={(e) => e.stopPropagation()} 
-              className={`w-full max-w-4xl max-h-[90vh] rounded-2xl border border-white/10 overflow-hidden flex flex-col reading-theme-${readingTheme} reading-size-${fontSize}`}
+              initial={{ y: 0 }}
+              animate={{ y: showControls ? 0 : -100 }}
+              transition={{ duration: 0.3 }}
+              className="fixed top-0 left-0 right-0 z-[55] bg-inherit border-b border-current/10 safe-area-top"
             >
-              {/* Header with theme controls - Always dark */}
-              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-[#0a0a0f] flex-shrink-0">
-                <h2 className="text-lg font-semibold truncate pr-4 text-white">{selectedStory.title}</h2>
-                <div className="flex items-center gap-2">
-                  {/* Settings Toggle */}
+              <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <motion.button 
-                    whileHover={{ scale: 1.05 }} 
-                    whileTap={{ scale: 0.95 }} 
-                    onClick={() => setShowSettings(!showSettings)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm transition-colors ${showSettings ? 'bg-violet-500/30 text-violet-300' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                  >
-                    ⚙
-                  </motion.button>
-                  {/* Close */}
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }} 
-                    whileTap={{ scale: 0.95 }} 
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => setSelectedStory(null)} 
-                    className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                    className="w-10 h-10 rounded-full bg-current/5 flex items-center justify-center flex-shrink-0"
                   >
-                    ✕
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
                   </motion.button>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm md:text-base font-semibold truncate">{selectedStory.title}</h2>
+                    <p className="text-xs opacity-50 truncate">{series?.title}</p>
+                  </div>
                 </div>
+                <motion.button 
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowSettings(!showSettings)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${showSettings ? 'bg-violet-500/30 text-violet-300' : 'bg-current/5'}`}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </motion.button>
               </div>
+            </motion.div>
 
-              {/* Settings Panel - Always dark regardless of theme */}
-              <AnimatePresence>
-                {showSettings && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden border-b border-white/10 bg-[#0a0a0f] flex-shrink-0"
-                  >
-                    <div className="p-4 space-y-4">
-                      {/* Theme Selection */}
-                      <div>
-                        <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">Theme</p>
-                        <div className="flex flex-wrap gap-2">
-                          {themeOptions.map((theme) => (
-                            <motion.button
-                              key={theme.id}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setReadingTheme(theme.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-                                readingTheme === theme.id 
-                                  ? 'bg-violet-500/40 border-violet-500/60 text-white' 
-                                  : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/15'
-                              } border`}
-                            >
-                              <span>{theme.icon}</span>
-                              <span>{theme.label}</span>
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Font Size */}
-                      <div>
-                        <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">Font Size</p>
-                        <div className="flex gap-2">
-                          {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map((size) => (
-                            <motion.button
-                              key={size}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setFontSize(size)}
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all border ${
-                                fontSize === size 
-                                  ? 'bg-violet-500/40 border-violet-500/60 text-white' 
-                                  : 'bg-white/10 border-white/20 text-gray-300 hover:text-white hover:bg-white/15'
-                              }`}
-                            >
-                              <span className={size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-lg'}>A</span>
-                            </motion.button>
-                          ))}
-                        </div>
+            {/* Settings Panel - Slides down */}
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="fixed top-[60px] left-0 right-0 z-[54] bg-inherit border-b border-current/10 safe-area-top"
+                >
+                  <div className="p-4 space-y-4 max-w-lg mx-auto">
+                    {/* Theme Selection */}
+                    <div>
+                      <p className="text-xs opacity-50 mb-2 uppercase tracking-wider">Theme</p>
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                        {themeOptions.map((theme) => (
+                          <motion.button
+                            key={theme.id}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setReadingTheme(theme.id)}
+                            className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-all ${
+                              readingTheme === theme.id 
+                                ? 'bg-violet-500/30 ring-2 ring-violet-500/50' 
+                                : 'bg-current/5'
+                            }`}
+                          >
+                            <span className="text-lg">{theme.icon}</span>
+                            <span className="opacity-70">{theme.label}</span>
+                          </motion.button>
+                        ))}
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
-              {/* Content */}
-              <div ref={contentRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-6">
+                    {/* Font Size */}
+                    <div>
+                      <p className="text-xs opacity-50 mb-2 uppercase tracking-wider">Size</p>
+                      <div className="flex gap-2">
+                        {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map((size) => (
+                          <motion.button
+                            key={size}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setFontSize(size)}
+                            className={`flex-1 py-2 rounded-lg flex items-center justify-center transition-all ${
+                              fontSize === size 
+                                ? 'bg-violet-500/30 ring-2 ring-violet-500/50' 
+                                : 'bg-current/5'
+                            }`}
+                          >
+                            <span className={size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-lg'}>Aa</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Font Family */}
+                    <div>
+                      <p className="text-xs opacity-50 mb-2 uppercase tracking-wider">Font</p>
+                      <div className="flex gap-2">
+                        {[
+                          { id: 'serif', label: 'Serif', sample: 'Aa' },
+                          { id: 'sans', label: 'Sans', sample: 'Aa' },
+                          { id: 'mono', label: 'Mono', sample: 'Aa' }
+                        ].map((font) => (
+                          <motion.button
+                            key={font.id}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setFontFamily(font.id as FontFamily)}
+                            className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-1 transition-all ${
+                              fontFamily === font.id 
+                                ? 'bg-violet-500/30 ring-2 ring-violet-500/50' 
+                                : 'bg-current/5'
+                            }`}
+                          >
+                            <span className={`text-lg ${font.id === 'serif' ? 'font-reading' : font.id === 'mono' ? 'font-mono' : 'font-sans'}`}>{font.sample}</span>
+                            <span className="text-xs opacity-70">{font.label}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Content Area */}
+            <div 
+              ref={contentRef} 
+              onScroll={handleScroll}
+              onClick={handleContentTap}
+              className="h-full overflow-y-auto overscroll-contain pt-16 pb-24 reading-scroll"
+            >
+              <div className="reader-content px-4 md:px-6 py-6">
                 {/* Creator Credit */}
                 {selectedStory.creditName && (
-                  <div className="mb-6 pb-4 border-b border-current/10">
+                  <div className="mb-8 pb-4 border-b border-current/10 text-center">
                     <p className="text-xs opacity-50 uppercase tracking-wider mb-1">Created by</p>
                     {selectedStory.creditLink ? (
                       <a 
                         href={selectedStory.creditLink} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-violet-400 hover:text-violet-300 transition-colors font-medium"
+                        className="text-violet-400 hover:text-violet-300 transition-colors font-medium inline-flex items-center gap-1"
                       >
-                        {selectedStory.creditName} ↗
+                        {selectedStory.creditName}
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
                       </a>
                     ) : (
                       <p className="font-medium">{selectedStory.creditName}</p>
@@ -446,64 +527,23 @@ export default function SeriesPage() {
                 )}
                 
                 {selectedStory.content ? (
-                  <div className="reader-content">
+                  <div className="reading-content">
                     <div 
-                      className="reading-content"
                       dangerouslySetInnerHTML={{ __html: selectedStory.content }}
                     />
-                    {/* Next/Previous Chapter Navigation */}
-                    {(() => {
-                      const currentIndex = stories.findIndex(s => s.id === selectedStory.id)
-                      const prevChapter = currentIndex > 0 ? stories[currentIndex - 1] : null
-                      const nextChapter = currentIndex < stories.length - 1 ? stories[currentIndex + 1] : null
-                      return (prevChapter || nextChapter) ? (
-                        <div className="mt-12 pt-8 border-t border-current/10">
-                          <div className="flex items-center justify-between gap-4">
-                            {prevChapter ? (
-                              <motion.button
-                                whileHover={{ scale: 1.02, x: -4 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedStory(prevChapter)}
-                                className="flex items-center gap-3 px-5 py-3 bg-black/20 border border-current/20 rounded-xl text-left hover:bg-black/30 transition-all group"
-                              >
-                                <span className="text-xl opacity-60 group-hover:opacity-100">←</span>
-                                <div>
-                                  <p className="text-xs opacity-60 uppercase tracking-wider">Previous</p>
-                                  <p className="font-medium">{prevChapter.title}</p>
-                                </div>
-                              </motion.button>
-                            ) : <div />}
-                            {nextChapter ? (
-                              <motion.button
-                                whileHover={{ scale: 1.02, x: 4 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedStory(nextChapter)}
-                                className="flex items-center gap-3 px-5 py-3 bg-violet-500/20 border border-violet-500/30 rounded-xl text-right hover:bg-violet-500/30 transition-all group ml-auto"
-                              >
-                                <div>
-                                  <p className="text-xs opacity-60 uppercase tracking-wider">Next Chapter</p>
-                                  <p className="font-medium">{nextChapter.title}</p>
-                                </div>
-                                <span className="text-xl opacity-60 group-hover:opacity-100">→</span>
-                              </motion.button>
-                            ) : null}
-                          </div>
-                        </div>
-                      ) : null
-                    })()}
                   </div>
                 ) : selectedStory.link ? (
                   <iframe 
                     src={selectedStory.link.includes('/preview') ? selectedStory.link : selectedStory.link.replace('/view', '/preview').replace('/edit', '/preview')} 
-                    className="w-full h-[600px] rounded-lg border border-white/10" 
+                    className="w-full h-[80vh] rounded-lg border border-current/10" 
                     allow="autoplay" 
                   />
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-gray-400 mb-6">No content link added yet</p>
+                    <p className="opacity-50 mb-6">No content added yet</p>
                     <Link href="/admin">
                       <motion.button
-                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         className="px-6 py-2 bg-violet-500/20 border border-violet-500/30 rounded-full text-sm text-violet-300"
                       >
                         Add Link in Admin →
@@ -512,6 +552,60 @@ export default function SeriesPage() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Bottom Navigation - Auto-hide on mobile scroll */}
+            <motion.div 
+              initial={{ y: 0 }}
+              animate={{ y: showControls ? 0 : 100 }}
+              transition={{ duration: 0.3 }}
+              className="fixed bottom-0 left-0 right-0 z-[55] bg-inherit border-t border-current/10 safe-area-bottom"
+            >
+              {(() => {
+                const currentIndex = stories.findIndex(s => s.id === selectedStory.id)
+                const prevChapter = currentIndex > 0 ? stories[currentIndex - 1] : null
+                const nextChapter = currentIndex < stories.length - 1 ? stories[currentIndex + 1] : null
+                return (
+                  <div className="flex items-center justify-between p-3 md:p-4 gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => prevChapter && setSelectedStory(prevChapter)}
+                      disabled={!prevChapter}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all ${
+                        prevChapter 
+                          ? 'bg-current/5 active:bg-current/10' 
+                          : 'opacity-30 cursor-not-allowed'
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span className="text-sm font-medium hidden sm:inline">Previous</span>
+                    </motion.button>
+                    
+                    <div className="flex flex-col items-center px-4">
+                      <span className="text-xs opacity-50">Chapter</span>
+                      <span className="text-sm font-semibold">{currentIndex + 1} / {stories.length}</span>
+                    </div>
+
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => nextChapter && setSelectedStory(nextChapter)}
+                      disabled={!nextChapter}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl transition-all ${
+                        nextChapter 
+                          ? 'bg-violet-500/20 active:bg-violet-500/30 text-violet-300' 
+                          : 'opacity-30 cursor-not-allowed'
+                      }`}
+                    >
+                      <span className="text-sm font-medium hidden sm:inline">Next</span>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </motion.button>
+                  </div>
+                )
+              })()}
             </motion.div>
           </motion.div>
         )}
