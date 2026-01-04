@@ -114,9 +114,9 @@ body {
 
 /* Glass Effect - More subtle */
 .glass {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(10, 10, 15, 0.8);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .glass-hover:hover {
