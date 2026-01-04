@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 export default function Footer() {
@@ -19,32 +18,21 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/">
-              <motion.div 
-                className="flex items-center gap-3 mb-4 cursor-pointer group"
-                whileHover={{ scale: 1.02 }}
-              >
-                <motion.div 
-                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center border border-pink-500/30 group-hover:border-pink-500/50 transition-colors"
-                  animate={{ rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
+              <div className="flex items-center gap-3 mb-4 cursor-pointer group">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center border border-pink-500/30 group-hover:border-pink-500/50 transition-colors">
                   <span className="text-pink-400 text-lg">✦</span>
-                </motion.div>
+                </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-white to-pink-200 bg-clip-text text-transparent">
                   FanFic
                 </span>
-              </motion.div>
+              </div>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
               Your gateway to fan fiction stories and audiobooks from beloved universes.
             </p>
-            <motion.p 
-              className="mt-3 text-xs text-pink-400/60"
-              animate={{ opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
+            <p className="mt-3 text-xs text-pink-400/60">
               Made with ♡ for fans
-            </motion.p>
+            </p>
           </div>
 
           {/* Navigation Links */}
@@ -58,21 +46,16 @@ export default function Footer() {
                 { name: 'Browse All', href: '/browse', icon: '📚' },
                 { name: 'Audiobooks', href: '/audiobooks', icon: '🎧' },
                 { name: 'About', href: '/about', icon: '✨' },
-              ].map((link, i) => (
-                <motion.li 
-                  key={link.name}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
+              ].map((link) => (
+                <li key={link.name}>
                   <Link 
                     href={link.href}
                     className="text-gray-400 text-sm hover:text-pink-300 transition-colors flex items-center gap-2 group"
                   >
                     <span className="opacity-50 group-hover:opacity-100 transition-opacity">{link.icon}</span>
-                    <span className="text-hover-underline">{link.name}</span>
+                    <span>{link.name}</span>
                   </Link>
-                </motion.li>
+                </li>
               ))}
             </ul>
           </div>
@@ -83,19 +66,15 @@ export default function Footer() {
               <span className="text-pink-400">⭐</span> Featured Series
             </h4>
             <ul className="space-y-3">
-              <motion.li 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
+              <li>
                 <Link 
                   href="/browse"
                   className="text-gray-400 text-sm hover:text-pink-300 transition-colors flex items-center gap-2 group"
                 >
                   <span className="opacity-50 group-hover:opacity-100 transition-opacity">⚔️</span>
-                  <span className="text-hover-underline">Shadow Slave</span>
+                  <span>Shadow Slave</span>
                 </Link>
-              </motion.li>
+              </li>
             </ul>
             <p className="mt-4 text-xs text-gray-500 italic">
               More series coming soon...
@@ -116,13 +95,9 @@ export default function Footer() {
                 placeholder="Your email"
                 className="flex-1 px-4 py-2.5 bg-white/5 border border-pink-500/20 rounded-xl text-sm focus:outline-none focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all placeholder:text-gray-500"
               />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30 rounded-xl text-pink-300 text-sm font-medium hover:from-pink-500/30 hover:to-fuchsia-500/30 transition-all"
-              >
+              <button className="px-5 py-2.5 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30 rounded-xl text-pink-300 text-sm font-medium hover:from-pink-500/30 hover:to-fuchsia-500/30 active:scale-95 transition-all">
                 Join
-              </motion.button>
+              </button>
             </div>
             <p className="mt-3 text-xs text-gray-500">
               No spam, only story updates ✨
@@ -133,13 +108,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-pink-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <motion.span
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="text-pink-400"
-            >
-              ♥
-            </motion.span>
+            <span className="text-pink-400">♥</span>
             <p className="text-gray-500 text-xs">
               © {currentYear} FanFic. All stories belong to their respective creators.
             </p>
@@ -150,31 +119,25 @@ export default function Footer() {
               { name: 'Discord', icon: '💬' },
               { name: 'GitHub', icon: '🐙' },
             ].map((social) => (
-              <motion.a
+              <a
                 key={social.name}
                 href="#"
-                whileHover={{ scale: 1.1, y: -2 }}
-                className="text-gray-500 text-xs hover:text-pink-400 transition-colors flex items-center gap-1.5"
+                className="text-gray-500 text-xs hover:text-pink-400 hover:-translate-y-0.5 transition-all flex items-center gap-1.5"
               >
                 <span>{social.icon}</span>
                 <span>{social.name}</span>
-              </motion.a>
+              </a>
             ))}
           </div>
         </div>
 
         {/* Credits */}
-        <motion.div 
-          className="mt-6 text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
+        <div className="mt-6 text-center">
           <p className="text-xs text-gray-600">
             Original stories by <span className="text-pink-400/80">Necroz2002</span> • 
             Site by <span className="text-fuchsia-400/80">QuaziSahil</span>
           </p>
-        </motion.div>
+        </div>
       </div>
     </footer>
   )
