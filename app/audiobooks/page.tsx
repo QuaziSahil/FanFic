@@ -5,25 +5,30 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { getAllSeries, Series, Chapter } from '@/lib/storage'
+import { getAllSeriesAsync, Series, Chapter } from '@/lib/storage'
 
 export default function AudiobooksPage() {
   const [audiobooks, setAudiobooks] = useState<{series: Series, chapter: Chapter}[]>([])
+  const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState<string | null>(null)
 
   useEffect(() => {
-    const allSeries = getAllSeries()
-    const allAudiobooks: {series: Series, chapter: Chapter}[] = []
-    
-    allSeries.forEach(series => {
-      series.chapters.forEach(chapter => {
-        if (chapter.type === 'audiobook') {
-          allAudiobooks.push({ series, chapter })
-        }
+    const loadAudiobooks = async () => {
+      const allSeries = await getAllSeriesAsync()
+      const allAudiobooks: {series: Series, chapter: Chapter}[] = []
+      
+      allSeries.forEach(series => {
+        series.chapters.forEach(chapter => {
+          if (chapter.type === 'audiobook') {
+            allAudiobooks.push({ series, chapter })
+          }
+        })
       })
-    })
-    
-    setAudiobooks(allAudiobooks)
+      
+      setAudiobooks(allAudiobooks)
+      setLoading(false)
+    }
+    loadAudiobooks()
   }, [])
 
   return (

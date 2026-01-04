@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getAllSeries, addSeries, deleteSeries, addChapter, deleteChapter, Series } from '@/lib/storage'
+import { getAllSeriesAsync, addSeries, deleteSeries, addChapter, deleteChapter, Series } from '@/lib/storage'
 
 const ADMIN_PASSWORD = 'Sahil388'
 
@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [series, setSeries] = useState<Series[]>([])
+  const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'series' | 'chapters'>('series')
   const [selectedSeries, setSelectedSeries] = useState<string>('')
   
@@ -30,9 +31,16 @@ export default function AdminPage() {
     { title: '', link: '' }
   ])
 
+  const loadSeries = async () => {
+    setLoading(true)
+    const data = await getAllSeriesAsync()
+    setSeries(data)
+    setLoading(false)
+  }
+
   useEffect(() => {
     if (isAuthenticated) {
-      setSeries(getAllSeries())
+      loadSeries()
     }
   }, [isAuthenticated])
 
@@ -46,11 +54,12 @@ export default function AdminPage() {
     }
   }
 
-  const handleAddSeries = (e: React.FormEvent) => {
+  const handleAddSeries = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newSeriesTitle.trim()) return
-    addSeries(newSeriesTitle, newSeriesDesc, newSeriesIcon, newSeriesImage || undefined)
-    setSeries(getAllSeries())
+    setLoading(true)
+    await addSeries(newSeriesTitle, newSeriesDesc, newSeriesIcon, newSeriesImage || undefined)
+    await loadSeries()
     setNewSeriesTitle('')
     setNewSeriesDesc('')
     setNewSeriesIcon('📚')
@@ -75,19 +84,21 @@ export default function AdminPage() {
     reader.readAsDataURL(file)
   }
 
-  const handleDeleteSeries = (id: string) => {
+  const handleDeleteSeries = async (id: string) => {
     if (confirm('Delete this series and all its chapters?')) {
-      deleteSeries(id)
-      setSeries(getAllSeries())
+      setLoading(true)
+      await deleteSeries(id)
+      await loadSeries()
       showSuccess('Series deleted!')
     }
   }
 
-  const handleAddChapter = (e: React.FormEvent) => {
+  const handleAddChapter = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedSeries || !newChapterTitle.trim()) return
-    addChapter(selectedSeries, newChapterTitle, newChapterLink, newChapterType, undefined, newChapterCreditName || undefined, newChapterCreditLink || undefined)
-    setSeries(getAllSeries())
+    setLoading(true)
+    await addChapter(selectedSeries, newChapterTitle, newChapterLink, newChapterType, undefined, newChapterCreditName || undefined, newChapterCreditLink || undefined)
+    await loadSeries()
     setNewChapterTitle('')
     setNewChapterLink('')
     setNewChapterCreditName('')
@@ -95,18 +106,19 @@ export default function AdminPage() {
     showSuccess('Chapter added successfully!')
   }
 
-  const handleBulkAddChapters = (e: React.FormEvent) => {
+  const handleBulkAddChapters = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedSeries) return
     
     const validChapters = bulkChapters.filter(ch => ch.title.trim())
     if (validChapters.length === 0) return
     
-    validChapters.forEach(ch => {
-      addChapter(selectedSeries, ch.title, ch.link, newChapterType)
-    })
+    setLoading(true)
+    for (const ch of validChapters) {
+      await addChapter(selectedSeries, ch.title, ch.link, newChapterType)
+    }
     
-    setSeries(getAllSeries())
+    await loadSeries()
     setBulkChapters([{ title: '', link: '' }])
     showSuccess(`${validChapters.length} chapters added successfully!`)
   }
@@ -127,10 +139,11 @@ export default function AdminPage() {
     setBulkChapters(updated)
   }
 
-  const handleDeleteChapter = (seriesId: string, chapterId: string) => {
+  const handleDeleteChapter = async (seriesId: string, chapterId: string) => {
     if (confirm('Delete this chapter?')) {
-      deleteChapter(seriesId, chapterId)
-      setSeries(getAllSeries())
+      setLoading(true)
+      await deleteChapter(seriesId, chapterId)
+      await loadSeries()
       showSuccess('Chapter deleted!')
     }
   }

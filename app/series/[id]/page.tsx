@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import AudioPlayer from '@/components/AudioPlayer'
-import { getSeriesById, Series, Chapter } from '@/lib/storage'
+import { getSeriesByIdAsync, Series, Chapter } from '@/lib/storage'
 import { useAuth } from '@/contexts/AuthContext'
 import { toggleBookmark, addToReadingHistory, updateReadingProgress } from '@/lib/firebase'
 
@@ -28,6 +28,7 @@ export default function SeriesPage() {
   const params = useParams()
   const seriesId = params.id as string
   const [series, setSeries] = useState<Series | null>(null)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStory, setSelectedStory] = useState<Chapter | null>(null)
@@ -43,8 +44,13 @@ export default function SeriesPage() {
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const data = getSeriesById(seriesId)
-    setSeries(data)
+    const loadSeries = async () => {
+      setLoading(true)
+      const data = await getSeriesByIdAsync(seriesId)
+      setSeries(data)
+      setLoading(false)
+    }
+    loadSeries()
   }, [seriesId])
 
   useEffect(() => {
@@ -82,7 +88,7 @@ export default function SeriesPage() {
     setBookmarking(false)
   }
 
-  if (!series) {
+  if (loading || !series) {
     return (
       <main className="min-h-screen relative flex items-center justify-center bg-[#050507]">
         <div className="text-center">

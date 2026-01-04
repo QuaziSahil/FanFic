@@ -17,6 +17,9 @@ import {
   setDoc, 
   getDoc, 
   updateDoc,
+  collection,
+  getDocs,
+  deleteDoc,
   serverTimestamp 
 } from 'firebase/firestore'
 
@@ -234,6 +237,178 @@ export const updatePreferredTheme = async (userId: string, theme: string) => {
     })
   } catch (error) {
     console.error('Error updating preferred theme:', error)
+  }
+}
+
+// ============== CONTENT MANAGEMENT (FIRESTORE) ==============
+
+export interface Chapter {
+  id: string
+  title: string
+  link: string
+  content?: string
+  type: 'story' | 'audiobook'
+  creditName?: string
+  creditLink?: string
+  createdAt: string
+}
+
+export interface Series {
+  id: string
+  title: string
+  description: string
+  icon: string
+  image?: string
+  chapters: Chapter[]
+  createdAt: string
+}
+
+// Get all series from Firestore
+export const getAllSeriesFromFirestore = async (): Promise<Series[]> => {
+  if (!db) return []
+  try {
+    const seriesCol = collection(db, 'series')
+    const snapshot = await getDocs(seriesCol)
+    const seriesList: Series[] = []
+    snapshot.forEach((doc) => {
+      seriesList.push({ id: doc.id, ...doc.data() } as Series)
+    })
+    return seriesList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  } catch (error) {
+    console.error('Error getting series:', error)
+    return []
+  }
+}
+
+// Get single series by ID
+export const getSeriesByIdFromFirestore = async (seriesId: string): Promise<Series | null> => {
+  if (!db) return null
+  try {
+    const seriesRef = doc(db, 'series', seriesId)
+    const seriesSnap = await getDoc(seriesRef)
+    if (seriesSnap.exists()) {
+      return { id: seriesSnap.id, ...seriesSnap.data() } as Series
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting series:', error)
+    return null
+  }
+}
+
+// Add new series
+export const addSeriesToFirestore = async (title: string, description: string, icon: string, image?: string): Promise<Series | null> => {
+  if (!db) return null
+  try {
+    const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    const newSeries: Omit<Series, 'id'> = {
+      title,
+      description,
+      icon,
+      image,
+      chapters: [],
+      createdAt: new Date().toISOString()
+    }
+    await setDoc(doc(db, 'series', id), newSeries)
+    return { id, ...newSeries }
+  } catch (error) {
+    console.error('Error adding series:', error)
+    return null
+  }
+}
+
+// Delete series
+export const deleteSeriesFromFirestore = async (seriesId: string): Promise<void> => {
+  if (!db) return
+  try {
+    await deleteDoc(doc(db, 'series', seriesId))
+  } catch (error) {
+    console.error('Error deleting series:', error)
+  }
+}
+
+// Add chapter to series
+export const addChapterToFirestore = async (
+  seriesId: string, 
+  title: string, 
+  link: string, 
+  type: 'story' | 'audiobook', 
+  content?: string,
+  creditName?: string,
+  creditLink?: string
+): Promise<Chapter | null> => {
+  if (!db) return null
+  try {
+    const seriesRef = doc(db, 'series', seriesId)
+    const seriesSnap = await getDoc(seriesRef)
+    if (!seriesSnap.exists()) return null
+    
+    const seriesData = seriesSnap.data() as Omit<Series, 'id'>
+    const chapterId = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now()
+    
+    const newChapter: Chapter = {
+      id: chapterId,
+      title,
+      link,
+      content,
+      type,
+      creditName,
+      creditLink,
+      createdAt: new Date().toISOString()
+    }
+    
+    await updateDoc(seriesRef, {
+      chapters: [...(seriesData.chapters || []), newChapter]
+    })
+    
+    return newChapter
+  } catch (error) {
+    console.error('Error adding chapter:', error)
+    return null
+  }
+}
+
+// Delete chapter from series
+export const deleteChapterFromFirestore = async (seriesId: string, chapterId: string): Promise<void> => {
+  if (!db) return
+  try {
+    const seriesRef = doc(db, 'series', seriesId)
+    const seriesSnap = await getDoc(seriesRef)
+    if (!seriesSnap.exists()) return
+    
+    const seriesData = seriesSnap.data() as Omit<Series, 'id'>
+    const updatedChapters = (seriesData.chapters || []).filter(c => c.id !== chapterId)
+    
+    await updateDoc(seriesRef, {
+      chapters: updatedChapters
+    })
+  } catch (error) {
+    console.error('Error deleting chapter:', error)
+  }
+}
+
+// Update chapter
+export const updateChapterInFirestore = async (
+  seriesId: string,
+  chapterId: string,
+  updates: Partial<Chapter>
+): Promise<void> => {
+  if (!db) return
+  try {
+    const seriesRef = doc(db, 'series', seriesId)
+    const seriesSnap = await getDoc(seriesRef)
+    if (!seriesSnap.exists()) return
+    
+    const seriesData = seriesSnap.data() as Omit<Series, 'id'>
+    const updatedChapters = (seriesData.chapters || []).map(c => 
+      c.id === chapterId ? { ...c, ...updates } : c
+    )
+    
+    await updateDoc(seriesRef, {
+      chapters: updatedChapters
+    })
+  } catch (error) {
+    console.error('Error updating chapter:', error)
   }
 }
 

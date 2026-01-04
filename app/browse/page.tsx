@@ -5,15 +5,21 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { getAllSeries, Series } from '@/lib/storage'
+import { getAllSeriesAsync, Series } from '@/lib/storage'
 
 export default function BrowsePage() {
   const [seriesData, setSeriesData] = useState<Series[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'stories' | 'audiobooks'>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    setSeriesData(getAllSeries())
+    const loadSeries = async () => {
+      const data = await getAllSeriesAsync()
+      setSeriesData(data)
+      setLoading(false)
+    }
+    loadSeries()
   }, [])
 
   const filteredSeries = seriesData.filter(series => 
