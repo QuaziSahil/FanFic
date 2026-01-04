@@ -75,20 +75,42 @@ export const createOrUpdateUser = async (user: User) => {
 
 // Sign in with Google - try popup first, fall back to redirect
 export const signInWithGoogle = async () => {
-  if (!auth) return null
+  if (!auth) {
+    console.error('Auth not initialized')
+    alert('Authentication not ready. Please refresh the page.')
+    return null
+  }
+  
   try {
     // Try popup first
     const result = await signInWithPopup(auth, googleProvider)
     await createOrUpdateUser(result.user)
     return result.user
   } catch (error: any) {
+    console.error('Sign-in error:', error.code, error.message)
+    
     // If popup blocked or failed, use redirect
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+    if (error.code === 'auth/popup-blocked' || 
+        error.code === 'auth/popup-closed-by-user' || 
+        error.code === 'auth/cancelled-popup-request') {
       console.log('Popup blocked, using redirect...')
-      await signInWithRedirect(auth, googleProvider)
+      try {
+        await signInWithRedirect(auth, googleProvider)
+      } catch (redirectError) {
+        console.error('Redirect error:', redirectError)
+        alert('Sign-in failed. Please try again.')
+      }
       return null
     }
-    console.error('Error signing in with Google:', error)
+    
+    // Handle unauthorized domain error
+    if (error.code === 'auth/unauthorized-domain') {
+      alert('This domain is not authorized for sign-in. Please contact the site administrator.')
+      return null
+    }
+    
+    // Handle other errors
+    alert(`Sign-in error: ${error.message}`)
     return null
   }
 }
